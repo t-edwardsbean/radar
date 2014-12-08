@@ -3,9 +3,9 @@
 # main
 ################################
 # FRAMEWORK_HOME必填
-FRAMEWORK_HOME="/opt/grab"
+FRAMEWORK_HOME="/opt/radar"
 
-FRAMWORK_MAIN_CLASS="com.baidu.grab.GrabMain"
+FRAMWORK_MAIN_CLASS="com.baidu.radar.RadarMain"
 FRAMEWORK_CLASSPATH=""
 opt_conf=""
 args=""
@@ -31,7 +31,7 @@ FRAMEWORK_CLASSPATH="${opt_conf}:${FRAMEWORK_HOME}/lib/*"
 
 run_framework() {
   echo "java -cp $FRAMEWORK_CLASSPATH $FRAMWORK_MAIN_CLASS"
-  nohup $JAVA_HOME/bin/java -cp $FRAMEWORK_CLASSPATH $FRAMWORK_MAIN_CLASS > /dev/null 2>&1 &
+  nohup $JAVA_HOME/bin/java -cp $FRAMEWORK_CLASSPATH $FRAMWORK_MAIN_CLASS  &
 }
 
 run_framework

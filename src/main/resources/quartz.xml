@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--要调用的工作类-->
+    <bean id="job" class="com.baidu.radar.schedule.SpiderJob"/>
+
+    <!--调用对象和方法-->
+    <bean id="task" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="job"/>
+        <property name="targetMethod" value="run"/>
+        <!-- 是否允许任务并发执行。当值为false时，表示必须等到前一个线程处理完毕后才再启一个新的线程 -->
+        <property name="concurrent" value="false"/>
+    </bean>
+
+    <!--触发时间-->
+    <bean id="runTime" class="org.springframework.scheduling.quartz.CronTriggerBean">
+        <property name="jobDetail" ref="task"/>
+        <!--47分的时候执行一次任务-->
+        <property name="cronExpression" value="0 */5 * * * ?"/>
+    </bean>
+
+    <!--设置调度 总管理类 如果将lazy-init='false'那么容器启动就会执行调度程序 -->
+    <bean id="quartzManager" lazy-init="true" autowire="no"
+          class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="runTime"/>
+                <!--<ref bean="tpRunTime"/>-->
+            </list>
+        </property>
+        <property name="autoStartup" value="true"/>
+        <property name="taskExecutor" ref="executor"/>
+    </bean>
+
+    <!-- 线程执行器配置，用于任务注册 -->
+    <bean id="executor"
+          class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+        <property name="corePoolSize" value="2" />
+        <property name="maxPoolSize" value="2" />
+        <property name="queueCapacity" value="50" />
+    </bean>
+</beans>
