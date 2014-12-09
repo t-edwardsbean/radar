@@ -8,12 +8,17 @@ import akka.event.LoggingAdapter;
 import com.baidu.radar.message.Image;
 import com.baidu.radar.tools.HttpUtil;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.util.EntityUtils;
 import scala.Option;
 import scala.concurrent.duration.Duration;
 import scala.runtime.AbstractFunction0;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +28,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImageActor extends UntypedActor {
     LoggingAdapter log = Logging.getLogger(getContext().system(), this);
-    private HttpUtil httpUtil = new HttpUtil();
+    private DefaultHttpClient httpClient = new DefaultHttpClient();
+
+    public ImageActor() {
+        httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
+
+    }
 
     @Override
     public void onReceive(Object message) throws Exception {
@@ -35,23 +45,36 @@ public class ImageActor extends UntypedActor {
         }
     }
 
-    private void downloadImage(Image image) throws Exception {
-        HttpResponse response = httpUtil.doGet(image.getUrl(), null);
+    private void downloadImage(Image image) throws IOException {
+        HttpGet httpGet = new HttpGet(image.getUrl());
         File file = new File(image.getFileName());
+        InputStream inputStream = null;
+        FileOutputStream outputStream = null;
         try {
-            FileOutputStream outputStream = new FileOutputStream(file);
-            InputStream inputStream = response.getEntity().getContent();
+            HttpResponse response = httpClient.execute(httpGet);
+             outputStream = new FileOutputStream(file);
+             inputStream = response.getEntity().getContent();
             byte buff[] = new byte[4096];
             int counts;
             while ((counts = inputStream.read(buff)) != -1) {
                 outputStream.write(buff, 0, counts);
             }
-            inputStream.close();
-            outputStream.close();
-            httpUtil.releaseConnection();
             log.debug("该图片下载完毕");
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.warning("图片文件保存失败,", e);
+            throw e;
+        } finally {
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                log.warning("文件流无法关闭");
+            }
+            httpGet.releaseConnection();
         }
     }
 
