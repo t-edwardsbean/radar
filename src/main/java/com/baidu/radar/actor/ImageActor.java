@@ -32,7 +32,7 @@ public class ImageActor extends UntypedActor {
 
     public ImageActor() {
         httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 10000);
-
+        httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 30000);
     }
 
     @Override
